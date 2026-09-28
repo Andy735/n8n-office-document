@@ -1,0 +1,386 @@
+{
+  "name": "辦公室文件申請與自動通知系統",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7cd240f6-7adc-4a11-a965-cb586dc1195a",
+              "name": "request_id",
+              "value": "={{ 'DOC-' + $now.toFormat('yyyyMMdd-HHmmss') }}",
+              "type": "string"
+            },
+            {
+              "id": "1db3a625-6cff-4fc8-a376-73ad11dcaba1",
+              "name": "submitted_at",
+              "value": "={{ $now.setZone('Asia/Taipei').toFormat('yyyy-MM-dd HH:mm') }}",
+              "type": "string"
+            },
+            {
+              "id": "0b60045b-a9da-4127-992f-f3f43c27a453",
+              "name": "status",
+              "value": "Pending",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        224,
+        -64
+      ],
+      "id": "45957f70-8d2f-4b12-9e8d-07df8e74be06",
+      "name": "產生申請編號"
+    },
+    {
+      "parameters": {
+        "formTitle": "文件處理申請表",
+        "formDescription": "請填寫需要行政或辦公室協助處理的文件",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -128,
+        -64
+      ],
+      "id": "5469b4e0-21a0-463b-b8a4-6c8ce0636fc9",
+      "name": "文件申請",
+      "webhookId": "xxxxxxxxxx"
+    },
+    {
+      "parameters": {
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "電子信箱",
+              "fieldType": "email",
+              "fieldName": "applicant_email",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "文件類型",
+              "fieldType": "dropdown",
+              "fieldName": "document_type",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "報價單"
+                  },
+                  {
+                    "option": "請款單"
+                  },
+                  {
+                    "option": "會議紀錄"
+                  },
+                  {
+                    "option": "合約"
+                  },
+                  {
+                    "option": "其他"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "文件主旨",
+              "fieldName": "subject",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "希望完成日期",
+              "fieldType": "date",
+              "fieldName": "due_date",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "緊急程度",
+              "fieldType": "dropdown",
+              "fieldName": "priority",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "一般"
+                  },
+                  {
+                    "option": "緊急"
+                  }
+                ]
+              }
+            },
+            {
+              "fieldLabel": "需求說明",
+              "fieldType": "textarea",
+              "fieldName": "description",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.form",
+      "typeVersion": 2.5,
+      "position": [
+        48,
+        -64
+      ],
+      "id": "821a87e8-50bc-4729-9e9e-569e915f5871",
+      "name": "表單",
+      "webhookId": "xxxxxxxxxx"
+    },
+    {
+      "parameters": {
+        "sendTo": "xxxxxxxxxx@gmail.com",
+        "subject": "={{ $json.request_id }}",
+        "message": "=Email：{{ $json.applicant_email }}\n文件類型：{{ $json.document_type }}\n需求說明：{{ $json.description }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        -240
+      ],
+      "id": "b6c1a343-16d7-4b40-82e0-3afb83092e11",
+      "name": "寄送Gmail",
+      "webhookId": "xxxxxxxxxx",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "xxxxxxxxxx",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/xxxxxxxxxx",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "工作表1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/xxxxxxxxxx"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "request_id": "={{ $json.request_id }}",
+            "applicant_email": "={{ $json.applicant_email }}",
+            "document_type": "={{ $json.document_type }}",
+            "status": "={{ $json.status }}",
+            "priority": "={{ $json.priority }}",
+            "subject": "={{ $json.subject }}",
+            "submitted_at": "={{ $json.submitted_at }}",
+            "due_date": "={{ $json.due_date }}",
+            "description": "={{ $json.description }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "request_id",
+              "displayName": "request_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "applicant_name",
+              "displayName": "applicant_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "applicant_email",
+              "displayName": "applicant_email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "department",
+              "displayName": "department",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "document_type",
+              "displayName": "document_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "due_date",
+              "displayName": "due_date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        -64
+      ],
+      "id": "8316ed44-b31b-415a-b517-eb3fa9a94175",
+      "name": "儲存Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "xxxxxxxxxx",
+          "name": "Google Sheets account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "辦公室文件申請與自動通知系統",
+        "height": 80,
+        "width": 256,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -128,
+        -240
+      ],
+      "id": "7c6a5ad7-f7ef-4ef7-bcb2-b6368523588f",
+      "name": "Sticky Note"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "產生申請編號": {
+      "main": [
+        [
+          {
+            "node": "儲存Sheets",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "寄送Gmail",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "文件申請": {
+      "main": [
+        [
+          {
+            "node": "表單",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "表單": {
+      "main": [
+        [
+          {
+            "node": "產生申請編號",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "儲存Sheets": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "522a35ab-466d-4d14-8216-b1d6fac0b478",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "9b86264b7da5be2f6478e69eac00ad25b656b44f4eedb5fc6561369c2dcf27bc"
+  },
+  "nodeGroups": [],
+  "id": "IULV6bOYU3SfvZ44",
+  "tags": []
+}
